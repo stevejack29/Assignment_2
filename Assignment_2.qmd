@@ -1,0 +1,150 @@
+---
+title: "Assignment 2 - General Linear Model"
+author: "Steven Jackson"
+format: docx
+editor: visual
+---
+
+execute: echo: true warning: false ---
+
+## Reproducible Analysis
+
+First, we will import the data and remove any missing values.
+
+```{r}
+#Importing the data 
+library(haven)
+PSYR6003_A2 <- read_sav("PSYR6003.A2.sav")
+
+PSYR6003_A2 <- na.omit(PSYR6003_A2)
+View(PSYR6003_A2)
+```
+
+Next, we will recode the sex variable as a factor, with female = 0 and male = 1.
+
+```{r}
+library(tidyverse)
+library(dplyr)
+PSYR6003_A2 <- PSYR6003_A2 %>% 
+  mutate(sex = as.factor(sex)) %>% 
+  mutate(sex = ifelse(sex == "Female", 0, 1))
+#Checking the variable to make sure it worked
+view(PSYR6003_A2)
+
+```
+
+We will first reverse-code tipm.CONS2.3y so we can calculate subscale totals for socially prescribed perfectionism (SPP), conscientiousness, and negative affect.
+
+```{r}
+#Reverse-coding tipm.CONS2.3y
+PSYR6003_A2<- mutate(PSYR6003_A2, reverse_CONS2 = ((1-tipm.CONS2.3y)+7))
+
+#Checking mutated variable
+view(PSYR6003_A2$reverse_CONS2)
+
+#Checking reverse coding
+
+view(PSYR6003_A2)
+
+#Calculating mean score totals for SPP, negative affect, and conscientiousness 
+
+#SPP
+
+PSYR6003_A2<-  mutate(PSYR6003_A2, SPP_summed = (mps.SPP1.3y + mps.SPP2.3y + mps.SPP3.3y + mps.SPP4.3y + mps.SPP5.3y)/5)
+
+#Negative affect
+
+PSYR6003_A2<-  mutate(PSYR6003_A2, NegAff_summed = (guilt1.3y + guilt2.3y + guilt3.3y + dep1.3y + dep2.3y + dep3.3y + fear1.3y + fear2.3y + fear3.3y + host1.3y + host2.3y + host3.3y)/12)
+
+#Conscientiousness
+
+PSYR6003_A2<-  mutate(PSYR6003_A2, CONS_summed = (tipm.CONS1.3y+reverse_CONS2)/2)
+
+```
+
+H1 - Sex, conscientiousness, and SPP predict negative affect. To test this, we will run a multiple regression using a general linear model. First, we will fit and visualize the model.
+
+```{r}
+#Step 1: Fit the model
+library(flexplot)
+regression <- lm(NegAff_summed~sex+CONS_summed+SPP_summed, data = PSYR6003_A2)
+
+#Step 2: Visualize
+
+visualize(regression)
+```
+
+Next, we will check the assumptions. From the visualization in Step 2, we can see that the residuals are mostly normally distributed, if not slightly right-skewed. If this is the only questionable part, the model diagnostics will be fairly reliable. For linearity, we look at the residual dependency plot - as we saw in Step 2, it's fairly straight, and therefore unlikely that this model would be better fit with a quadratic. For homoscedasticity, we can check the spread-location graph, and we can see that the variance across the range of the predictor is straight, meaning this assumption is met. Lastly, we can be sure that the observations are indepdendent (in this case, that one person's survey scores did not affect another person's survey scores) at the design phase rather than the data analysis phase. I will assume that the hypothetical participants in this study did not influence each other's scores. Lastly, there are three possible outliers. While it would be possible to conduct a sensitivity analyssi to be sure, they do not look very far from the rest of the data, and will be included for this analysis for the sake of data completeness.
+
+Lastly, we will look at the model output.
+
+```{r}
+#Step 3: Estimates
+
+library(apaTables)
+
+estimates(regression)
+
+apa.reg.table(regression, filename = "H1.doc", table.number = 1)
+```
+
+Sex predicts negative affect in that being female predicts having more negative affect (b = -0.56 \[-0.96, -0.15\]). Conscientiousness negatively predicts negative affect (b = -0.26 \[-0.38, -0.15\]). Socially prescribed perfectionism predicts negative affect (b = 0.20 \[0.10, 0.30\]). The model as a whole predicts negative affect (R\^2 = 0.269 \[.14, 0.40\]); hypothesis #1 is confirmed. Table 1 below summarizes the regression analysis herein.
+
+```{r}
+library(apaTables)
+
+apa.reg.table(regression, filename=NA, table.number = 2, prop.var.conf.level = 0.95)
+
+```
+
+Table 2 details the bivariate correlations between sex, conscientiousness, and socially prescribed perfectionism. There are notable correlations between nearly every variable pair except for sex and socially prescribed perfectionism; we will therefore require a second analysis to examine the isolated effect of socially prescribed perfectionism (H2).
+
+```{r}
+library(tidyverse)
+
+correlations <- select(PSYR6003_A2, NegAff_summed, CONS_summed, SPP_summed, sex)
+
+apa.cor.table(correlations, table.number = 3, filename = "correlations.doc")
+
+#Creating Table 3 for write-up
+
+library(apaTables)
+
+block1 <- lm(NegAff_summed ~ CONS_summed + sex, data = PSYR6003_A2)
+block2 <- lm(NegAff_summed ~ CONS_summed + SPP_summed + sex, data = PSYR6003_A2)
+
+table3 <- apa.reg.table(block1, block2,
+                        table.number = 4,
+                        filename="exRegTable.doc")
+
+```
+
+H2 - SPP will predict unique variance in negative affect over and above sex and conscientiousness in a meaningful way.
+
+Step 1 - Research question: How does SPP predict negative affect after controlling for sex and conscientiousness?
+
+Step 2 - Formulate as a linear model.
+
+Negative affect = b0 + b1xsex + b2xconscientiousness + b3xSPP + e
+
+Step 3 - Identify parameter of interest.
+
+Negative affect = b0 + b1xsex + b2xconscientiousness + *b3xSPP* + e
+
+Step 4 - Set up a full and reduced model.
+
+Full: Negative affect = b0 + b1xsex + b2xconscientiousness + b3xSPP + e
+
+Reduced: Negative affect = b0 + b1xsex + b2xconscientiousness + e
+
+```{r}
+#Building reduced and full model (i.e., without and with SPP)
+
+reduced <- lm(NegAff_summed~sex + CONS_summed, data=PSYR6003_A2)
+
+full <- lm(NegAff_summed~SPP_summed + sex + CONS_summed, data=PSYR6003_A2)
+
+model.comparison(reduced, full)
+```
+
+The full model has a lower AIC and BIC, as well as a Bayes Factor of over 100, indicating that it is 'decisively' a much better fit than the reduced model. Thus, we can conclude that H2 is confirmed, and socially-prescribed perfectionism is a reliable predictor of negative affect over and above sex and conscientiousness.
