@@ -82,6 +82,7 @@ Lastly, we will look at the model output.
 library(apaTables)
 
 estimates(regression)
+summary(regression) #For standard error; added manually to table 1 in write-up
 
 apa.reg.table(regression, filename = "H1.doc", table.number = 1)
 ```
