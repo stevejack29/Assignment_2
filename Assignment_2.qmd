@@ -1,7 +1,7 @@
 ---
 title: "Assignment 2 - General Linear Model"
 author: "Steven Jackson"
-format: docx
+format: html
 editor: visual
 ---
 
@@ -74,7 +74,7 @@ regression <- lm(NegAff_summed~sex+CONS_summed+SPP_summed, data = PSYR6003_A2)
 visualize(regression)
 ```
 
-Next, we will check the assumptions. From the visualization in Step 2, we can see that the residuals are mostly normally distributed, if not slightly right-skewed. If this is the only questionable part, the model diagnostics will be fairly reliable. For linearity, we look at the residual dependency plot - as we saw in Step 2, it's fairly straight, and therefore unlikely that this model would be better fit with a quadratic. For homoscedasticity, we can check the spread-location graph, and we can see that the variance across the range of the predictor is straight, meaning this assumption is met. Lastly, we can be sure that the observations are indepdendent (in this case, that one person's survey scores did not affect another person's survey scores) at the design phase rather than the data analysis phase. I will assume that the hypothetical participants in this study did not influence each other's scores. Lastly, there are three possible outliers. While it would be possible to conduct a sensitivity analyssi to be sure, they do not look very far from the rest of the data, and will be included for this analysis for the sake of data completeness.
+Next, we will check the assumptions. From the visualization in Step 2, we can see that the residuals are mostly normally distributed, if not slightly right-skewed. If this is the only questionable part, the model diagnostics will be fairly reliable. For linearity, we look at the residual dependency plot - as we saw in Step 2, it's fairly straight, and therefore unlikely that this model would be better fit with a quadratic. For homoscedasticity, we can check the spread-location graph, and we can see that the variance across the range of the predictor is straight, meaning this assumption is met. Lastly, we can be sure that the observations are independent (in this case, that one person's survey scores did not affect another person's survey scores) at the design phase rather than the data analysis phase. I will assume that the hypothetical participants in this study did not influence each other's scores. Lastly, there are three possible outliers. While it would be possible to conduct a sensitivity analysis to be sure, they do not look very far from the rest of the data, and will be included for this analysis for the sake of data completeness.
 
 Lastly, we will look at the model output.
 
@@ -147,4 +147,15 @@ full <- lm(NegAff_summed~SPP_summed + sex + CONS_summed, data=PSYR6003_A2)
 model.comparison(reduced, full)
 ```
 
-The full model has a lower AIC and BIC, as well as a Bayes Factor of over 100, indicating that it is 'decisively' a much better fit than the reduced model. Thus, we can conclude that H2 is confirmed, and socially-prescribed perfectionism is a reliable predictor of negative affect over and above sex and conscientiousness.
+The full model has a lower AIC and BIC, as well as a Bayes Factor of over 100, indicating that it is 'decisively' a much better fit than the reduced model.
+
+While the full model is clealy superior, one more step is required to Because of the correlations found between each of the variables, an AVP will be built to control for sex and conscientiousness to better visualize the unique variance contributed by SPP.
+
+```{r}
+#Creating AVP
+library(flexplot)
+added.plot(NegAff_summed~sex+CONS_summed+SPP_summed, data=PSYR6003_A2)
+
+```
+
+As seen in the AVP, once we control for sex and conscientiousness, there remains a relationship between SPP and negative affect. Thus, socially-prescribed perfectionism is a reliable predictor of negative affect over and above sex and conscientiousness. However, it is worth noting that this is a small relationship, with the difference between a score of 0 and 6 SPP corresponding to an increase of only 1 in negative affect. Given the wording of H2, I would not consider this a "meaningful" difference. Thus, H2 is not confirmed, and socially-prescribed perfectionism is not a reliable predictor of negative affect over and above sex and conscientiousness in a meaningful way.
