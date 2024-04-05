@@ -5,8 +5,6 @@ format: html
 editor: visual
 ---
 
-execute: echo: true warning: false ---
-
 ## Reproducible Analysis
 
 First, we will import the data and remove any missing values.
